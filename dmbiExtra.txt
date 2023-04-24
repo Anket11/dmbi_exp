@@ -156,6 +156,275 @@ transactions = [
 frequent_itemsets = apriori(transactions, min_support=0.4)
 print(frequent_itemsets)
 
+/////////
+
+
+import numpy as np
+import pandas as pd
+
+data = pd.read_csv('DMBI_prac2.csv')
+print(data)
+
+data['Average Score in ASIA'] = data['Average Score in ASIA'].fillna(data['Average Score in ASIA'].mean())
+data['Average Score in SENA'] = data['Average Score in SENA'].fillna(data['Average Score in SENA'].mean())
+
+data['Average Score in ASIA'] = data['Average Score in ASIA'].astype('int')
+data['Average Score in SENA'] = data['Average Score in SENA'].astype('int')
+
+print(data)
+
+
+
+
+# equal frequency
+def equifreq(arr1, m):	
+	a = len(arr1)
+	n = int(a / m)
+	for i in range(0, m):
+		arr = []
+		for j in range(i * n, (i + 1) * n):
+			if j >= a:
+				break
+			arr = arr + [arr1[j]]
+		print(arr)
+
+x= data.iloc[:, 1].values
+print("equal depth binning")
+equifreq(x, 9)
+
+
+
+# equal width
+def equiwidth(arr1, m):
+	a = len(arr1)
+	w = int((max(arr1) - min(arr1)) / m)
+	min1 = min(arr1)
+	arr = []
+	for i in range(0, m + 1):
+		arr = arr + [min1 + w * i]
+	arri=[]
+	
+	for i in range(0, m):
+		temp = []
+		for j in arr1:
+			if j >= arr[i] and j <= arr[i+1]:
+				temp += [j]
+		arri += [temp]
+	print(arri)
+
+x= data.iloc[:, 1].values
+
+print("equal width binning")
+equiwidth(x, 4)	
+
+
+#smoothining 
+# equi-depth 
+# bin means method
+bn=data.iloc[:,1].values
+print(bn)
+k = 3
+for i in range(0,29,k):
+  # mean of k values
+  print("\nBin before")
+  mean = 0
+  for j in range(k):
+    mean+=bn[i+j]
+    print(bn[i+j],end=" ")
+  
+  mean = float(mean/k)
+  print("\nBin after")
+  
+  for j in range(k):
+   bn[i+j] = mean
+   print(bn[i+j],end=" ")
+  print()
+
+
+#bin bounaries
+temp =[]
+for i in data["Average Score in ASIA"]:
+  temp.append(i)
+
+temp.sort()
+
+# print("Before ",temp)
+
+for i in range(0,29,k):
+# at every bin store first and last values temp[i]
+ mn = temp[i+k-1]
+ mx = temp[i]
+#depending upon distance change values
+for j in range(k):
+ if j >= k-1-j:
+    temp[i+j] =mx
+
+else:
+
+ temp[i+j] ==mn
+
+print("Smoothning by boundries ",temp)
+
+
+# Max-Min Transformation
+def max_min_transform(col):
+    return (col - col.min()) / (col.max() - col.min())
+
+data['Average Score in ASIA_max_min'] = max_min_transform(data['Average Score in ASIA'])
+
+# Z-Score Transformation
+def z_score_transform(col):
+    return (col - col.mean()) / col.std()
+
+data['Average Score in ASIA_z_score'] = z_score_transform(data['Average Score in ASIA'])
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+data = pd.read_csv('hotel_37.csv')
+print(data)
+
+
+
+# Decimal Scaling Transformation
+def decimal_scaling_transform(col):
+    return col / (10 ** np.ceil(np.log10(col.abs().max())))
+
+data['Average Score in ASIA_decimal_scaled'] = decimal_scaling_transform(data['Average Score in ASIA'])
+print(data[['Average Score in ASIA','Average Score in ASIA_max_min','Average Score in ASIA_z_score','Average Score in ASIA_decimal_scaled']])
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+data = pd.read_csv('hotel_37.csv')
+print(data)
+
+import numpy
+from numpy import percentile
+import matplotlib.pyplot as plt
+from pandas import read_csv
+
+data = read_csv('hotel_37.csv')
+x = data.iloc[:,2]
+quartile = percentile(data.iloc[:,2],[25,50,75])
+min_data ,max_data = data.iloc[:,2].min(), data.iloc[:,2].max()
+
+print('Five number summary:')
+print('Min : %.1f'% min_data)
+print('Q1: %.1f' % quartile[0])
+print('Median: %.1f' % quartile[1])
+print('Q3: %.1f' % quartile[2])
+print('Max : %.1f'% max_data)
+
+
+plt.boxplot(x)
+plt.show()
+
+plt.hist(x)
+plt.show()
+
+y = data.iloc[:,1]
+plt.scatter(x,y)
+plt.show()
+
+import statsmodels.api as sm
+import pylab as py
+sm.qqplot(x, line ='45')
+sm.qqplot(y, line ='45')
+py.show()
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+data = pd.read_csv('subject_37.csv')
+print(data)
+
+observed = []
+expected = []
+for i in range(0,4):
+  for j in range(1,4):
+    a = data.iloc[i,j]
+    b = ((data.iloc[i,4]*data.iloc[4,j])/data.iloc[4,4])
+    observed.append(a)
+    expected.append(b)
+    
+print('Observed values are:',observed)
+print('Expected values are:',expected)
+
+cnt = 0
+chisq=0
+for i in range(0,4):
+  for j in range(1,4):
+    chisq+= pow(((data.iloc[i,j])-expected[cnt]),2)/expected[cnt]
+    cnt+=1
+print('Chisquare value: ',chisq)
+
+
+import pandas as pd
+from scipy.stats import pearsonr
+import csv
+
+df = pd.read_csv("jobs_37.csv")
+print(df)
+
+
+mean1 = df['no of jobs'].mean()
+mean2 = df['no of colleges'].mean()
+std1 = df['no of jobs'].std()
+std2 = df['no of colleges'].std()
+cnt1 = df['no of jobs'].count()
+
+attr1 = []
+for i in range(0,10,1):
+  for j in range(0,1):  
+    a  = df.iloc[i,j]
+    attr1.append(a)
+
+attr2 =[]
+for i in range(0,10,1):
+  for j in range(1,2):  
+    b  = df.iloc[i,j]
+    attr2.append(b)
+count=0
+corr=0
+for i in range(0, 10, 1):
+  for j in range(0, 2):
+    if count >= len(attr1):
+      break
+    corr += (attr1[count] - mean1) * (attr2[count] - mean2)
+    count += 1
+  if count >= len(attr1):
+    break
+r= corr/((cnt1-1)*std1*std2)
+
+print('Pearson correlation value: ', r)
+if r < 0 :
+  print('The two attributes are negatively correlated')
+elif r == 0 :
+  print('The two attributes are independent')
+else:
+  print('The two attributes are positively correlated')
+
+import numpy as np
+from scipy.stats import pearsonr
+
+# Create some data
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([2, 4, 6, 8, 10])
+
+# Calculate Pearson's r
+r, p_value = pearsonr(x, y)
+
+# Print the result
+print("Pearson's r:", r)
 
 
 
