@@ -1,0 +1,162 @@
+﻿import pandas as pd
+import numpy as np
+
+# Calculate the entropy of a set of labels
+def entropy(labels):
+    n = len(labels)
+    _, counts = np.unique(labels, return_counts=True)
+    probabilities = counts / n
+    entropy = -np.sum(probabilities * np.log2(probabilities))
+    return entropy
+
+# Calculate the information gain of a feature
+def information_gain(X, y, feature, threshold):
+    left_labels = y[X[:, feature] <= threshold]
+    right_labels = y[X[:, feature] > threshold]
+    left_entropy = entropy(left_labels)
+    right_entropy = entropy(right_labels)
+    n = len(y)
+    left_weight = len(left_labels) / n
+    right_weight = len(right_labels) / n
+    information_gain = entropy(y) - left_weight * left_entropy - right_weight * right_entropy
+    return information_gain
+
+# Find the best feature and threshold to split the data
+def find_best_split(X, y):
+    best_feature = None
+    best_threshold = None
+    best_gain = 0
+    for feature in range(X.shape[1]):
+        thresholds = np.unique(X[:, feature])
+        for threshold in thresholds:
+            gain = information_gain(X, y, feature, threshold)
+            if gain > best_gain:
+                best_feature = feature
+                best_threshold = threshold
+                best_gain = gain
+    return best_feature, best_threshold, best_gain
+
+# Build the decision tree recursively
+def build_tree(X, y, max_depth=10, min_samples_split=2, gain_threshold=0, depth=0):
+    # Stop splitting when the maximum depth is reached or the node contains too few samples
+    if depth >= max_depth or len(y) < min_samples_split:
+        prediction = np.bincount(y).argmax()
+        return prediction
+
+    # Stop splitting when all labels are the same
+    if len(np.unique(y)) == 1:
+        prediction = y[0]
+        return prediction
+
+    # Find the best feature and threshold to split the data
+    best_feature, best_threshold, best_gain = find_best_split(X, y)
+
+    # Stop splitting when the information gain is too low
+    if best_gain < gain_threshold:
+        prediction = np.bincount(y).argmax()
+        return prediction
+
+    # Split the data and build the left and right subtrees recursively
+    left_indices = X[:, best_feature] <= best_threshold
+    right_indices = X[:, best_feature] > best_threshold
+    left_tree = build_tree(X[left_indices], y[left_indices], max_depth, min_samples_split, gain_threshold, depth + 1)
+    right_tree = build_tree(X[right_indices], y[right_indices], max_depth, min_samples_split, gain_threshold, depth + 1)
+
+    # Return the decision tree node
+    decision_node = {'feature': best_feature, 'threshold': best_threshold, 'left': left_tree, 'right': right_tree}
+    return decision_node
+
+# Predict the label of a sample using the decision tree
+def predict_sample(sample, tree):
+    if isinstance(tree, dict):
+        feature = tree['feature']
+        threshold = tree['threshold']
+        if sample[feature] <= threshold:
+            return predict_sample(sample, tree['left'])
+        else:
+            return predict_sample(sample, tree['right'])
+    else:
+        return tree
+
+# Predict the labels of a set of samples using the decision tree
+def predict(X, tree):
+    predictions = []
+    for sample in X:
+        prediction = predict_sample(sample, tree)
+        predictions.append(prediction)
+   return np.array(predictions)
+
+
+
+
+
+Hello eh eh
+
+def apriori(transactions, min_support=0.5):
+    """
+    Computes frequent itemsets using the Apriori algorithm.
+    
+    Args:
+    - transactions: A list of transactions, where each transaction is a list of items.
+    - min_support: The minimum support threshold.
+    
+    Returns:
+    - A dictionary of frequent itemsets, where each key is an itemset and each value is the support.
+    """
+    
+    # Count the frequency of each item in the dataset
+    item_counts = {}
+    for transaction in transactions:
+        for item in transaction:
+            if item not in item_counts:
+                item_counts[item] = 0
+            item_counts[item] += 1
+    
+    # Filter out infrequent items
+    frequent_items = {item: count for item, count in item_counts.items() if count / len(transactions) >= min_support}
+    
+    # Generate candidate itemsets of length 2 or more
+    candidate_itemsets = set(frozenset([item]) for item in frequent_items)
+    k = 2
+    while True:
+        candidate_itemsets = set(frozenset(itemset1.union(itemset2)) for itemset1 in candidate_itemsets for itemset2 in candidate_itemsets if len(itemset1.union(itemset2)) == k)
+        if len(candidate_itemsets) == 0:
+            break
+            
+        # Count the frequency of each candidate itemset
+        itemset_counts = {itemset: 0 for itemset in candidate_itemsets}
+        for transaction in transactions:
+            for itemset in candidate_itemsets:
+                if itemset.issubset(transaction):
+                    itemset_counts[itemset] += 1
+        
+        # Filter out infrequent itemsets
+        frequent_itemsets = {itemset: count / len(transactions) for itemset, count in itemset_counts.items() if count / len(transactions) >= min_support}
+        
+        # Stop if there are no frequent itemsets of length k or more
+        if len(frequent_itemsets) == 0:
+            break
+            
+        # Add the frequent itemsets to the set of all frequent itemsets
+        frequent_items.update(frequent_itemsets)
+        
+        # Increment k
+        k += 1
+        
+    return frequent_items
+transactions = [
+    ['apple', 'banana', 'orange'],
+    ['banana', 'orange', 'pear'],
+    ['apple', 'banana', 'pear'],
+    ['banana', 'pear'],
+    ['apple', 'orange'],
+    ['apple', 'banana', 'orange', 'pear']
+]
+
+frequent_itemsets = apriori(transactions, min_support=0.4)
+print(frequent_itemsets)
+
+
+
+
+
